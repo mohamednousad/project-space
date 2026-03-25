@@ -1,197 +1,552 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IREPM System | Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f4f5f7; }
-        .sidebar-active { border-right: 3px solid #0052cc; background-color: #ebf2ff; color: #0052cc; }
-        .jira-blue { background-color: #0052cc; }
-        .jira-sidebar { background-color: #f4f5f7; width: 240px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Requirement Engineering & Project Management</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+brand: {
+50: '#deebff',
+100: '#b3d4ff',
+500: '#0052cc',
+600: '#0047b3',
+900: '#172b4d'
+}
+}
+}
+}
+}
+</script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; background-color: #f4f5f7; color: #172b4d; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+.modal { display: none; background: rgba(9, 30, 66, 0.54); }
+.modal.active { display: flex; }
+.view { display: none; }
+.view.active { display: block; }
+#canvas-container { border: 1px solid #dfe1e6; background: white; cursor: crosshair; }
+</style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body>
 
-    <aside class="jira-sidebar border-r border-gray-300 flex flex-col">
-        <div class="p-6 flex items-center space-x-2">
-            <div class="jira-blue p-2 rounded text-white"><i class="fas fa-layer-group"></i></div>
-            <span class="font-bold text-gray-800 text-xl tracking-tight">IREPM</span>
-        </div>
-        
-        <nav class="flex-1 mt-4 px-3 space-y-1">
-            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium rounded sidebar-active">
-                <i class="fas fa-columns mr-3"></i> Dashboard
-            </a>
-            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded">
-                <i class="fas fa-list-check mr-3"></i> Requirements
-            </a>
-            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded">
-                <i class="fas fa-project-diagram mr-3"></i> System Diagrams
-            </a>
-            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded">
-                <i class="fas fa-clock mr-3"></i> Timeline
-            </a>
-            <a href="#" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded">
-                <i class="fas fa-wallet mr-3"></i> Budgeting
-            </a>
-        </nav>
+<aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full shrink-0">
+<div class="h-14 flex items-center px-4 border-b border-gray-200 font-bold text-lg text-brand-900">
+<i class="fa-solid fa-layer-group text-brand-500 mr-2"></i> ReqManager
+</div>
+<nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+<a href="#" onclick="navigate('dashboard')" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-brand-500 bg-brand-50" id="nav-dashboard">
+<i class="fa-solid fa-table-columns w-5 text-center mr-2"></i> Dashboard
+</a>
+<div class="pt-4 pb-2">
+<p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Projects</p>
+</div>
+<div id="project-list-sidebar" class="space-y-1"></div>
+<button onclick="openModal('project-modal')" class="w-full mt-2 flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+<i class="fa-solid fa-plus w-5 text-center mr-2"></i> Create Project
+</button>
+<div class="pt-4 pb-2">
+<p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tools</p>
+</div>
+<a href="#" onclick="navigate('diagrams')" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900" id="nav-diagrams">
+<i class="fa-solid fa-project-diagram w-5 text-center mr-2"></i> System Diagrams
+</a>
+</nav>
+</aside>
 
-        <div class="p-4 border-t border-gray-300">
-            <button class="w-full flex items-center justify-center jira-blue text-white py-2 rounded font-medium hover:bg-blue-700 transition">
-                <i class="fas fa-plus mr-2"></i> Create Project
-            </button>
-        </div>
-    </aside>
+<main class="flex-1 flex flex-col h-full overflow-hidden">
+<header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
+<div class="flex items-center text-sm text-gray-500" id="breadcrumbs">
+<span>Dashboard</span>
+</div>
+<div class="flex items-center space-x-4">
+<button class="text-gray-400 hover:text-gray-500"><i class="fa-solid fa-bell"></i></button>
+<div class="h-8 w-8 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm">A</div>
+</div>
+</header>
 
-    <main class="flex-1 flex flex-col overflow-y-auto">
-        <header class="h-16 bg-white border-b border-gray-300 flex items-center justify-between px-8">
-            <div class="flex items-center text-sm text-gray-500">
-                Projects / <span class="ml-1 text-gray-800 font-semibold">Core Engine Development</span>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="relative">
-                    <input type="text" placeholder="Search..." class="pl-10 pr-4 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                </div>
-                <div class="w-8 h-8 rounded-full jira-blue flex items-center justify-center text-white text-xs font-bold">JD</div>
-            </div>
-        </header>
+<div class="flex-1 overflow-auto p-6" id="main-content">
+<div id="view-dashboard" class="view active">
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-2xl font-bold text-brand-900">Projects Dashboard</h1>
+<button onclick="openModal('project-modal')" class="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm">
+Create Project
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="dashboard-grid"></div>
+</div>
 
-        <section class="p-8">
-            <div class="flex justify-between items-end mb-8">
-                <div>
-                    <h1 class="text-2xl font-semibold text-gray-800">Project Overview</h1>
-                    <p class="text-gray-500 text-sm">Track requirements and milestone progression.</p>
-                </div>
-                <div class="flex space-x-2">
-                    <button class="bg-gray-100 px-4 py-2 rounded text-sm font-medium border border-gray-300 hover:bg-gray-200">Export PDF</button>
-                    <button class="bg-gray-100 px-4 py-2 rounded text-sm font-medium border border-gray-300 hover:bg-gray-200">Settings</button>
-                </div>
-            </div>
+<div id="view-project" class="view">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h1 class="text-2xl font-bold text-brand-900" id="proj-title-display">Project Title</h1>
+<p class="text-sm text-gray-500 mt-1" id="proj-desc-display">Description</p>
+</div>
+<div class="flex space-x-2">
+<div class="bg-white border border-gray-200 rounded-md px-4 py-2 text-sm flex items-center shadow-sm">
+<span class="text-gray-500 mr-2">Budget:</span>
+<span class="font-bold text-brand-900" id="proj-budget-display">$0</span>
+</div>
+</div>
+</div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded shadow-sm border border-gray-200">
-                    <h3 class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">Total Requirements</h3>
-                    <p class="text-3xl font-bold">142</p>
-                    <div class="mt-4 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-blue-600" style="width: 75%"></div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded shadow-sm border border-gray-200">
-                    <h3 class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">Budget Utilization</h3>
-                    <p class="text-3xl font-bold text-green-600">$42,500</p>
-                    <p class="text-xs text-gray-400 mt-2">of $60,000 allocated</p>
-                </div>
-                <div class="bg-white p-6 rounded shadow-sm border border-gray-200">
-                    <h3 class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">Active Milestones</h3>
-                    <p class="text-3xl font-bold text-orange-500">4 / 12</p>
-                    <p class="text-xs text-gray-400 mt-2">3 Due this week</p>
-                </div>
-            </div>
+<div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+<div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-lg">
+<h2 class="text-lg font-semibold text-brand-900"><i class="fa-solid fa-list-check mr-2 text-gray-500"></i>Requirements</h2>
+<button onclick="openModal('req-modal')" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
+<i class="fa-solid fa-plus mr-1"></i> Add Requirement
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="min-w-full divide-y divide-gray-200">
+<thead class="bg-white">
+<tr>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+<th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="bg-white divide-y divide-gray-200" id="req-table-body"></tbody>
+</table>
+</div>
+</div>
 
-            <div class="bg-white rounded border border-gray-200 mb-8">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h2 class="font-semibold text-gray-700 text-lg">Requirements Backlog</h2>
-                    <button class="text-blue-600 text-sm font-semibold hover:underline">View All</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50 text-gray-600 text-xs uppercase font-bold">
-                            <tr>
-                                <th class="px-6 py-3 border-b">ID</th>
-                                <th class="px-6 py-3 border-b">Requirement Name</th>
-                                <th class="px-6 py-3 border-b">Priority</th>
-                                <th class="px-6 py-3 border-b">Status</th>
-                                <th class="px-6 py-3 border-b">Module</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm text-gray-700">
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 border-b">REQ-101</td>
-                                <td class="px-6 py-4 border-b font-medium">User Authentication via OAuth2</td>
-                                <td class="px-6 py-4 border-b"><span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">HIGH</span></td>
-                                <td class="px-6 py-4 border-b font-semibold text-blue-600">IN PROGRESS</td>
-                                <td class="px-6 py-4 border-b">Security</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 border-b">REQ-102</td>
-                                <td class="px-6 py-4 border-b font-medium">System Health Dashboard</td>
-                                <td class="px-6 py-4 border-b"><span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">MEDIUM</span></td>
-                                <td class="px-6 py-4 border-b font-semibold text-gray-400">TODO</td>
-                                <td class="px-6 py-4 border-b">Monitoring</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 border-b">REQ-103</td>
-                                <td class="px-6 py-4 border-b font-medium">Automated PDF Report Generation</td>
-                                <td class="px-6 py-4 border-b"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">LOW</span></td>
-                                <td class="px-6 py-4 border-b font-semibold text-green-600">COMPLETED</td>
-                                <td class="px-6 py-4 border-b">Reporting</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<div class="bg-white shadow-sm rounded-lg border border-gray-200">
+<div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-lg">
+<h2 class="text-lg font-semibold text-brand-900"><i class="fa-solid fa-flag-checkered mr-2 text-gray-500"></i>Milestones & Timeline</h2>
+<button onclick="openModal('milestone-modal')" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
+<i class="fa-solid fa-plus mr-1"></i> Add Milestone
+</button>
+</div>
+<div class="p-4">
+<div class="relative border-l border-gray-200 ml-3 space-y-6" id="milestone-list"></div>
+</div>
+</div>
+</div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded border border-gray-200">
-                    <h2 class="font-semibold text-gray-700 mb-4">Project Progress (%)</h2>
-                    <canvas id="progressChart" height="200"></canvas>
-                </div>
-                <div class="bg-white p-6 rounded border border-gray-200">
-                    <h2 class="font-semibold text-gray-700 mb-4">Quick Actions</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button class="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded hover:border-blue-500 hover:text-blue-500 transition">
-                            <i class="fas fa-diagram-predecessor text-xl mb-2"></i>
-                            <span class="text-xs font-bold">New Diagram</span>
-                        </button>
-                        <button class="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded hover:border-blue-500 hover:text-blue-500 transition">
-                            <i class="fas fa-file-import text-xl mb-2"></i>
-                            <span class="text-xs font-bold">Import CSV</span>
-                        </button>
-                        <button class="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded hover:border-blue-500 hover:text-blue-500 transition">
-                            <i class="fas fa-users text-xl mb-2"></i>
-                            <span class="text-xs font-bold">Add Stakeholder</span>
-                        </button>
-                        <button class="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded hover:border-blue-500 hover:text-blue-500 transition">
-                            <i class="fas fa-bullseye text-xl mb-2"></i>
-                            <span class="text-xs font-bold">Add Milestone</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+<div id="view-diagrams" class="view h-full flex flex-col">
+<div class="flex justify-between items-center mb-4 shrink-0">
+<h1 class="text-2xl font-bold text-brand-900">System Diagram Editor</h1>
+<div class="space-x-2">
+<button onclick="setDrawMode('rect')" class="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-md text-sm hover:bg-gray-50"><i class="fa-solid fa-square"></i> Block</button>
+<button onclick="setDrawMode('line')" class="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-md text-sm hover:bg-gray-50"><i class="fa-solid fa-arrow-right"></i> Line</button>
+<button onclick="clearCanvas()" class="bg-red-50 border border-red-200 text-red-600 px-3 py-1.5 rounded-md text-sm hover:bg-red-100"><i class="fa-solid fa-trash"></i> Clear</button>
+</div>
+</div>
+<div class="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative">
+<canvas id="diagram-canvas"></canvas>
+</div>
+</div>
+</div>
+</main>
 
-    <script>
-        const ctx = document.getElementById('progressChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
-                datasets: [{
-                    label: 'Requirements Completed',
-                    data: [12, 19, 34, 45, 70, 82],
-                    borderColor: '#0052cc',
-                    backgroundColor: 'rgba(0, 82, 204, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
-    </script>
+<div id="project-modal" class="modal fixed inset-0 z-50 items-center justify-center">
+<div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+<div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+<h3 class="text-lg font-bold text-brand-900">Create Project</h3>
+<button onclick="closeModal('project-modal')" class="text-gray-400 hover:text-gray-500"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<form id="project-form" onsubmit="saveProject(event)" class="p-6 space-y-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+<input type="text" id="p-name" required class="w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500">
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+<textarea id="p-desc" rows="3" class="w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500"></textarea>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Budget ($)</label>
+<input type="number" id="p-budget" required class="w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500">
+</div>
+<div class="pt-4 flex justify-end space-x-2">
+<button type="button" onclick="closeModal('project-modal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+<button type="submit" class="px-4 py-2 bg-brand-500 text-white rounded-md text-sm font-medium hover:bg-brand-600">Create</button>
+</div>
+</form>
+</div>
+</div>
+
+<div id="req-modal" class="modal fixed inset-0 z-50 items-center justify-center">
+<div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+<div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+<h3 class="text-lg font-bold text-brand-900">Add Requirement</h3>
+<button onclick="closeModal('req-modal')" class="text-gray-400 hover:text-gray-500"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<form id="req-form" onsubmit="saveRequirement(event)" class="p-6 space-y-4">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Module</label>
+<input type="text" id="r-module" required class="w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500">
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+<select id="r-priority" class="w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500">
+<option value="High">High</option>
+<option value="Medium">Medium</option>
+<option value="Low">Low</option>
+</select>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Requirement Description</label>
+<textarea id="r-desc" rows="4" required class="w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500"></textarea>
+</div>
+<div class="pt-4 flex justify-end space-x-2">
+<button type="button" onclick="closeModal('req-modal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+<button type="submit" class="px-4 py-2 bg-brand-500 text-white rounded-md text-sm font-medium hover:bg-brand-600">Save</button>
+</div>
+</form>
+</div>
+</div>
+
+<div id="milestone-modal" class="modal fixed inset-0 z-50 items-center justify-center">
+<div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+<div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+<h3 class="text-lg font-bold text-brand-900">Add Milestone</h3>
+<button onclick="closeModal('milestone-modal')" class="text-gray-400 hover:text-gray-500"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<form id="milestone-form" onsubmit="saveMilestone(event)" class="p-6 space-y-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+<input type="text" id="m-title" required class="w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500">
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+<input type="date" id="m-date" required class="w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500">
+</div>
+<div class="pt-4 flex justify-end space-x-2">
+<button type="button" onclick="closeModal('milestone-modal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+<button type="submit" class="px-4 py-2 bg-brand-500 text-white rounded-md text-sm font-medium hover:bg-brand-600">Save</button>
+</div>
+</form>
+</div>
+</div>
+
+<script>
+let appData = JSON.parse(localStorage.getItem('jiraCloneData')) || { projects: [], diagrams: [] };
+let currentProjectId = null;
+
+function saveData() {
+localStorage.setItem('jiraCloneData', JSON.stringify(appData));
+}
+
+function openModal(id) {
+document.getElementById(id).classList.add('active');
+}
+
+function closeModal(id) {
+document.getElementById(id).classList.remove('active');
+if(id === 'project-form') document.getElementById('project-form').reset();
+if(id === 'req-form') document.getElementById('req-form').reset();
+if(id === 'milestone-form') document.getElementById('milestone-form').reset();
+}
+
+function navigate(viewId, param = null) {
+document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+document.getElementById('view-' + viewId).classList.add('active');
+document.querySelectorAll('.nav-link').forEach(el => {
+el.classList.remove('text-brand-500', 'bg-brand-50');
+el.classList.add('text-gray-600');
+});
+
+const navEl = document.getElementById('nav-' + viewId);
+if(navEl) {
+navEl.classList.remove('text-gray-600');
+navEl.classList.add('text-brand-500', 'bg-brand-50');
+}
+
+if (viewId === 'dashboard') {
+currentProjectId = null;
+renderDashboard();
+document.getElementById('breadcrumbs').innerHTML = '<span>Dashboard</span>';
+} else if (viewId === 'project' && param) {
+currentProjectId = param;
+renderProjectView();
+} else if (viewId === 'diagrams') {
+initCanvas();
+document.getElementById('breadcrumbs').innerHTML = '<span>System Diagrams</span>';
+}
+}
+
+function saveProject(e) {
+e.preventDefault();
+const newProject = {
+id: Date.now().toString(),
+name: document.getElementById('p-name').value,
+desc: document.getElementById('p-desc').value,
+budget: document.getElementById('p-budget').value,
+requirements: [],
+milestones: []
+};
+appData.projects.push(newProject);
+saveData();
+closeModal('project-modal');
+document.getElementById('project-form').reset();
+renderSidebar();
+if(!currentProjectId) renderDashboard();
+}
+
+function saveRequirement(e) {
+e.preventDefault();
+const proj = appData.projects.find(p => p.id === currentProjectId);
+const newReq = {
+id: 'REQ-' + (proj.requirements.length + 101),
+module: document.getElementById('r-module').value,
+desc: document.getElementById('r-desc').value,
+priority: document.getElementById('r-priority').value,
+status: 'To Do'
+};
+proj.requirements.push(newReq);
+saveData();
+closeModal('req-modal');
+document.getElementById('req-form').reset();
+renderProjectView();
+}
+
+function saveMilestone(e) {
+e.preventDefault();
+const proj = appData.projects.find(p => p.id === currentProjectId);
+const newMs = {
+id: Date.now().toString(),
+title: document.getElementById('m-title').value,
+date: document.getElementById('m-date').value
+};
+proj.milestones.push(newMs);
+proj.milestones.sort((a,b) => new Date(a.date) - new Date(b.date));
+saveData();
+closeModal('milestone-modal');
+document.getElementById('milestone-form').reset();
+renderProjectView();
+}
+
+function deleteRequirement(reqId) {
+const proj = appData.projects.find(p => p.id === currentProjectId);
+proj.requirements = proj.requirements.filter(r => r.id !== reqId);
+saveData();
+renderProjectView();
+}
+
+function updateReqStatus(reqId, newStatus) {
+const proj = appData.projects.find(p => p.id === currentProjectId);
+const req = proj.requirements.find(r => r.id === reqId);
+req.status = newStatus;
+saveData();
+renderProjectView();
+}
+
+function renderSidebar() {
+const list = document.getElementById('project-list-sidebar');
+list.innerHTML = '';
+appData.projects.forEach(p => {
+const isActive = p.id === currentProjectId;
+const cls = isActive ? 'text-brand-500 bg-brand-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+list.innerHTML += `<a href="#" onclick="navigate('project', '${p.id}')" class="flex items-center px-3 py-2 text-sm font-medium rounded-md ${cls} nav-link proj-nav"><i class="fa-solid fa-folder w-5 text-center mr-2"></i><span class="truncate">${p.name}</span></a>`;
+});
+}
+
+function renderDashboard() {
+const grid = document.getElementById('dashboard-grid');
+grid.innerHTML = '';
+if(appData.projects.length === 0) {
+grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500 bg-white rounded-lg border border-dashed border-gray-300">No projects found. Create one to get started.</div>';
+return;
+}
+appData.projects.forEach(p => {
+const reqCount = p.requirements.length;
+const msCount = p.milestones.length;
+const doneCount = p.requirements.filter(r => r.status === 'Done').length;
+const progress = reqCount === 0 ? 0 : Math.round((doneCount / reqCount) * 100);
+
+grid.innerHTML += `
+<div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer p-5 flex flex-col h-full" onclick="navigate('project', '${p.id}')">
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-lg font-bold text-brand-900 truncate">${p.name}</h3>
+<span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">Active</span>
+</div>
+<p class="text-sm text-gray-500 mb-4 line-clamp-2 flex-1">${p.desc || 'No description provided.'}</p>
+<div class="space-y-3">
+<div class="flex justify-between text-sm text-gray-600">
+<span><i class="fa-solid fa-list-check mr-1"></i> ${reqCount} Reqs</span>
+<span><i class="fa-solid fa-flag mr-1"></i> ${msCount} Milestones</span>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="font-medium text-gray-700">Progress</span>
+<span class="font-medium text-brand-600">${progress}%</span>
+</div>
+<div class="w-full bg-gray-200 rounded-full h-1.5">
+<div class="bg-brand-500 h-1.5 rounded-full" style="width: ${progress}%"></div>
+</div>
+</div>
+<div class="pt-3 border-t border-gray-100 flex justify-between items-center">
+<span class="text-xs text-gray-500">Budget</span>
+<span class="text-sm font-bold text-brand-900">$${parseFloat(p.budget).toLocaleString()}</span>
+</div>
+</div>
+</div>`;
+});
+renderSidebar();
+}
+
+function renderProjectView() {
+const p = appData.projects.find(x => x.id === currentProjectId);
+if(!p) return;
+
+document.getElementById('proj-title-display').innerText = p.name;
+document.getElementById('proj-desc-display').innerText = p.desc || 'No description provided.';
+document.getElementById('proj-budget-display').innerText = '$' + parseFloat(p.budget).toLocaleString();
+document.getElementById('breadcrumbs').innerHTML = `<a href="#" onclick="navigate('dashboard')" class="hover:underline">Dashboard</a> <span class="mx-2">/</span> <span class="font-medium text-gray-900">${p.name}</span>`;
+
+const tbody = document.getElementById('req-table-body');
+tbody.innerHTML = '';
+if(p.requirements.length === 0) {
+tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 text-sm">No requirements added yet.</td></tr>';
+} else {
+p.requirements.forEach(r => {
+let pColor = r.priority === 'High' ? 'text-red-700 bg-red-50 ring-red-600/20' : r.priority === 'Medium' ? 'text-yellow-800 bg-yellow-50 ring-yellow-600/20' : 'text-green-700 bg-green-50 ring-green-600/20';
+tbody.innerHTML += `
+<tr class="hover:bg-gray-50 group">
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${r.id}</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">${r.module}</span></td>
+<td class="px-6 py-4 text-sm text-gray-900 truncate max-w-md">${r.desc}</td>
+<td class="px-6 py-4 whitespace-nowrap"><span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${pColor}">${r.priority}</span></td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+<select onchange="updateReqStatus('${r.id}', this.value)" class="text-sm border-gray-300 rounded focus:ring-brand-500 focus:border-brand-500 p-1">
+<option value="To Do" ${r.status==='To Do'?'selected':''}>To Do</option>
+<option value="In Progress" ${r.status==='In Progress'?'selected':''}>In Progress</option>
+<option value="Done" ${r.status==='Done'?'selected':''}>Done</option>
+</select>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+<button onclick="deleteRequirement('${r.id}')" class="text-red-600 hover:text-red-900"><i class="fa-solid fa-trash"></i></button>
+</td>
+</tr>`;
+});
+}
+
+const msList = document.getElementById('milestone-list');
+msList.innerHTML = '';
+if(p.milestones.length === 0) {
+msList.innerHTML = '<div class="text-sm text-gray-500 py-2">No milestones defined.</div>';
+} else {
+p.milestones.forEach(m => {
+msList.innerHTML += `
+<div class="relative pl-6">
+<span class="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full bg-brand-500 ring-4 ring-white"></span>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-gray-900">${m.title}</span>
+<span class="text-xs text-gray-500 flex items-center mt-1"><i class="fa-regular fa-calendar mr-1"></i> ${new Date(m.date).toLocaleDateString()}</span>
+</div>
+</div>`;
+});
+}
+renderSidebar();
+}
+
+let canvas, ctx;
+let isDrawing = false;
+let startX, startY;
+let drawMode = 'rect';
+let savedDiagrams = appData.diagrams || [];
+let imgData = null;
+
+function initCanvas() {
+canvas = document.getElementById('diagram-canvas');
+const container = canvas.parentElement;
+canvas.width = container.clientWidth;
+canvas.height = container.clientHeight;
+ctx = canvas.getContext('2d');
+ctx.lineWidth = 2;
+ctx.strokeStyle = '#172b4d';
+ctx.fillStyle = '#ffffff';
+
+if (appData.diagrams && appData.diagrams.length > 0) {
+const img = new Image();
+img.onload = function() {
+ctx.drawImage(img, 0, 0);
+};
+img.src = appData.diagrams[0];
+}
+
+canvas.onmousedown = (e) => {
+isDrawing = true;
+const rect = canvas.getBoundingClientRect();
+startX = e.clientX - rect.left;
+startY = e.clientY - rect.top;
+imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+};
+
+canvas.onmousemove = (e) => {
+if(!isDrawing) return;
+const rect = canvas.getBoundingClientRect();
+const currentX = e.clientX - rect.left;
+const currentY = e.clientY - rect.top;
+
+ctx.putImageData(imgData, 0, 0);
+
+if(drawMode === 'rect') {
+ctx.beginPath();
+ctx.rect(startX, startY, currentX - startX, currentY - startY);
+ctx.fillRect(startX, startY, currentX - startX, currentY - startY);
+ctx.stroke();
+} else if(drawMode === 'line') {
+ctx.beginPath();
+ctx.moveTo(startX, startY);
+ctx.lineTo(currentX, currentY);
+ctx.stroke();
+
+const angle = Math.atan2(currentY - startY, currentX - startX);
+ctx.beginPath();
+ctx.moveTo(currentX, currentY);
+ctx.lineTo(currentX - 10 * Math.cos(angle - Math.PI / 6), currentY - 10 * Math.sin(angle - Math.PI / 6));
+ctx.lineTo(currentX - 10 * Math.cos(angle + Math.PI / 6), currentY - 10 * Math.sin(angle + Math.PI / 6));
+ctx.closePath();
+ctx.fillStyle = '#172b4d';
+ctx.fill();
+ctx.fillStyle = '#ffffff';
+}
+};
+
+canvas.onmouseup = () => {
+if(isDrawing) {
+isDrawing = false;
+appData.diagrams = [canvas.toDataURL()];
+saveData();
+}
+};
+}
+
+function setDrawMode(mode) { drawMode = mode; }
+function clearCanvas() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+appData.diagrams = [];
+saveData();
+}
+
+window.addEventListener('resize', () => {
+if(document.getElementById('view-diagrams').classList.contains('active')) {
+const temp = canvas.toDataURL();
+const container = canvas.parentElement;
+canvas.width = container.clientWidth;
+canvas.height = container.clientHeight;
+const img = new Image();
+img.onload = () => { ctx.drawImage(img, 0, 0); ctx.lineWidth = 2; ctx.strokeStyle = '#172b4d'; ctx.fillStyle = '#ffffff'; };
+img.src = temp;
+}
+});
+
+window.onload = () => {
+renderSidebar();
+renderDashboard();
+};
+</script>
 </body>
 </html>
